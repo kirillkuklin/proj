@@ -1,6 +1,7 @@
 import paramiko
 import time
 
+#<editor-fold desc="Establishing connection">
 if __name__ == '__main__':
     # ip = '172.17.13.89'
     # username = 'oracle'
@@ -21,6 +22,7 @@ if __name__ == '__main__':
 
     # Use invoke_shell to establish an 'interactive session'
     remote_conn = remote_conn_pre.invoke_shell()
+#</editor-fold>
 
 
 def get_user(remote_conn):  # remote_conn type is <class 'paramiko.channel.Channel'>
@@ -35,8 +37,8 @@ def get_user(remote_conn):  # remote_conn type is <class 'paramiko.channel.Chann
         if i.find("USER") == 0:
             res[i.lstrip('SQL>').split()[0]] = i.lstrip('SQL>').split()[2][1:-1]
     return res
-
 # print(get_user(remote_conn))
+
 
 def get_online_redo_logs(remote_conn):  # remote_conn type is <class 'paramiko.channel.Channel'>
     remote_conn.send("sqlplus / as sysdba\n")
@@ -53,7 +55,19 @@ def get_online_redo_logs(remote_conn):  # remote_conn type is <class 'paramiko.c
             for i in res:
                 value = (i.strip())
                 yield (value)
+# for i in get_online_redo_logs(remote_conn): print(i)
 
-for i in get_online_redo_logs(remote_conn): print(i)
+
+def oratab(remote_conn):
+    remote_conn.send("cat /etc/oratab\n")
+    time.sleep(2)
+    output = remote_conn.recv(5000)
+    oratabfile = output.decode("utf-8")
+    for i in oratabfile.splitlines():
+        if not i.startswith('#') and not i.startswith('['):
+            splitted_line = i.rstrip().split()
+            if len(splitted_line) > 0 and 'cat' not in splitted_line and 'Last' not in splitted_line:
+                yield (splitted_line)
+# for i in oratab(remote_conn): print(i)
 
 
