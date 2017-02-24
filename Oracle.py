@@ -1,5 +1,7 @@
 import paramiko
 import time
+import os
+import re
 
 #<editor-fold desc="Establishing connection">
 if __name__ == '__main__':
@@ -69,5 +71,33 @@ def oratab(remote_conn):
             if len(splitted_line) > 0 and 'cat' not in splitted_line and 'Last' not in splitted_line:
                 yield (splitted_line)
 # for i in oratab(remote_conn): print(i)
+
+
+def inv(remote_conn):
+    remote_conn.send("locate oraInst.loc\n")
+    time.sleep(2)
+    output = remote_conn.recv(5000)
+    invfiles = output.decode("utf-8")
+    for i in invfiles.splitlines():
+        if i.startswith('/'):
+            pathtoinv = i.splitlines()[0]
+    remote_conn.send("cat " + pathtoinv + "\n")
+    time.sleep(2)
+    output = remote_conn.recv(5000)
+    content = output.decode("utf-8")
+    for i in content.splitlines():
+        if i.startswith('inventory_loc'):
+            oraInventory = (re.findall('=(.*)', i))[0]
+    remote_conn.send("cat " + oraInventory + "/" + "ContentsXML" + "/" + "inventory.xml" + "\n")
+    time.sleep(5)
+    output = remote_conn.recv(7000)
+    oraInv = output.decode("utf-8")
+    for i in oraInv.splitlines():
+        if i.startswith('<HOME NAME'):
+            yield i
+# for i in inv(remote_conn): print(i)
+
+
+
 
 
