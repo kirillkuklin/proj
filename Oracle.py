@@ -113,7 +113,9 @@ def db_status(remote_conn):
     time.sleep(1)
     remote_conn.send("set linesize 3000\nSELECT DATABASE_STATUS FROM V$INSTANCE;\n")
     time.sleep(2)
-    remote_conn.send("SELECT VERSION FROM V$INSTANCE;\n")
+    remote_conn.send("SELECT BANNER FROM V$VERSION WHERE BANNER LIKE 'Oracle%';\n")
+    time.sleep(2)
+    remote_conn.send("SELECT OPEN_MODE, LOG_MODE FROM V$DATABASE;\n")
     time.sleep(2)
     output = remote_conn.recv(10000)
     sqlplus = output.decode("utf-8")
@@ -124,6 +126,21 @@ def db_status(remote_conn):
             res = lines[i:i + 3]
             for i in res:
                 yield i.strip()
+            print('')
+    for i in rng:
+        if lines[i].strip().find('BANNER') == 0:
+            res = lines[i:i + 3]
+            for i in res:
+                yield i.strip()
+            print('')
+    for i in rng:
+        if lines[i].strip().find('OPEN_MODE') == 0:
+            res = lines[i:i + 3]
+            for i in res:
+                yield i.strip()
+            print('')
+
 for i in db_status(remote_conn): print(i)
+
 
 
