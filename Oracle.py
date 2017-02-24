@@ -27,42 +27,9 @@ if __name__ == '__main__':
 #</editor-fold>
 
 
-def get_user(remote_conn):  # remote_conn type is <class 'paramiko.channel.Channel'>
-
-    remote_conn.send("sqlplus / as sysdba\n")
-    time.sleep(1)
-    remote_conn.send("show user\n")
-    time.sleep(2)
-    output = remote_conn.recv(10000)
-    sqlplus = output.decode("utf-8")
-    for i in sqlplus.split('\n'):
-        if i.find("USER") == 0:
-            res[i.lstrip('SQL>').split()[0]] = i.lstrip('SQL>').split()[2][1:-1]
-    return res
-# print(get_user(remote_conn))
-
-
-def get_online_redo_logs(remote_conn):  # remote_conn type is <class 'paramiko.channel.Channel'>
-    remote_conn.send("sqlplus / as sysdba\n")
-    time.sleep(1)
-    remote_conn.send("set linesize 3000\nselect *from v$log;\n")
-    time.sleep(2)
-    output = remote_conn.recv(10000)
-    sqlplus = output.decode("utf-8")
-    lines = sqlplus.splitlines(True)
-    rng = range (0, len(lines))
-    for i in rng:
-        if lines[i].rstrip().find('GROUP') == 4:
-            res = lines[i:i+5]
-            for i in res:
-                value = (i.strip())
-                yield (value)
-# for i in get_online_redo_logs(remote_conn): print(i)
-
-
 def oratab(remote_conn):
     remote_conn.send("cat /etc/oratab\n")
-    time.sleep(2)
+    time.sleep(5)
     output = remote_conn.recv(5000)
     oratabfile = output.decode("utf-8")
     for i in oratabfile.splitlines():
@@ -97,6 +64,7 @@ def inv(remote_conn):
             yield i
 # for i in inv(remote_conn): print(i)
 
+
 def dbs(remote_conn):
     remote_conn.send("ll $ORACLE_HOME/dbs\n")
     time.sleep(2)
@@ -105,9 +73,57 @@ def dbs(remote_conn):
     for i in files.splitlines():
         if len(i) > 30 and not i.startswith("Last") and not i.startswith("["):
             yield i
-for i in dbs(remote_conn): print(i)
+# for i in dbs(remote_conn): print(i)
 
 
+def get_user(remote_conn):
 
+    remote_conn.send("sqlplus / as sysdba\n")
+    time.sleep(1)
+    remote_conn.send("show user\n")
+    time.sleep(2)
+    output = remote_conn.recv(10000)
+    sqlplus = output.decode("utf-8")
+    for i in sqlplus.split('\n'):
+        if i.find("USER") == 0:
+            res[i.lstrip('SQL>').split()[0]] = i.lstrip('SQL>').split()[2][1:-1]
+    return res
+# print(get_user(remote_conn))
+
+
+def get_online_redo_logs(remote_conn):
+    remote_conn.send("sqlplus / as sysdba\n")
+    time.sleep(1)
+    remote_conn.send("set linesize 3000\nselect *from v$log;\n")
+    time.sleep(2)
+    output = remote_conn.recv(10000)
+    sqlplus = output.decode("utf-8")
+    lines = sqlplus.splitlines(True)
+    rng = range (0, len(lines))
+    for i in rng:
+        if lines[i].rstrip().find('GROUP') == 4:
+            res = lines[i:i+5]
+            for i in res:
+                value = (i.strip())
+                yield (value)
+# for i in get_online_redo_logs(remote_conn): print(i)
+
+def db_status(remote_conn):
+    remote_conn.send("sqlplus / as sysdba\n")
+    time.sleep(1)
+    remote_conn.send("set linesize 3000\nSELECT DATABASE_STATUS FROM V$INSTANCE;\n")
+    time.sleep(2)
+    remote_conn.send("SELECT VERSION FROM V$INSTANCE;\n")
+    time.sleep(2)
+    output = remote_conn.recv(10000)
+    sqlplus = output.decode("utf-8")
+    lines = sqlplus.splitlines(True)
+    rng = range(0, len(lines))
+    for i in rng:
+        if lines[i].strip().find('DATABASE_STATUS') == 0:
+            res = lines[i:i + 3]
+            for i in res:
+                yield i.strip()
+for i in db_status(remote_conn): print(i)
 
 
