@@ -97,6 +97,16 @@ def inv(remote_conn):
             yield i
 # for i in inv(remote_conn): print(i)
 
+def dbs(remote_conn):
+    remote_conn.send("ll $ORACLE_HOME/dbs\n")
+    time.sleep(2)
+    output = remote_conn.recv(5000)
+    files = output.decode("utf-8")
+    for i in files.splitlines():
+        if len(i) > 30 and not i.startswith("Last") and not i.startswith("["):
+            yield i
+for i in dbs(remote_conn): print(i)
+
 
 
 
