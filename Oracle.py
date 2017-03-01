@@ -176,12 +176,15 @@ def get_cont(remote_conn):
                     yield i.strip()
 
 
-
 for i in is_container(remote_conn):
     # print(i)
     if 'YES' in i:
-        print("CDB is here")
-        for i in get_cont(remote_conn): print(i)
+        print("Container Database is detected")
+        for i in get_cont(remote_conn):
+            if i.startswith('0'): print("Instance level:", re.findall(".* (.*)", i)[0])
+            elif i.startswith('1'): print("Container Database:", re.findall(".* (.*)", i)[0])
+            elif i.startswith('2'): print("Seed Database:", re.findall(".* (.*)", i)[0])
+            else: print("Pluggable Database:", re.findall(".* (.*)", i)[0])
 
 
 # select name, cdb, con_id, con_dbid from v$database;
