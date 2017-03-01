@@ -5,12 +5,12 @@ import re
 
 #<editor-fold desc="Establishing connection">
 if __name__ == '__main__':
-    # ip = '172.17.13.89'
-    # username = 'oracle'
-    # password = '642362kkk'
-    ip = '172.17.12.58'
+    ip = '172.17.13.89'
     username = 'oracle'
-    password = 'Veeam123'
+    password = '642362kkk'
+    # ip = '172.17.12.58'
+    # username = 'oracle'
+    # password = 'Veeam123'
     res = {}
 
     # Create instance of SSHClient object
@@ -136,7 +136,37 @@ def db_status(remote_conn):
             for i in res:
                 yield i.strip()
             print('')
-for i in db_status(remote_conn): print(i)
+# for i in db_status(remote_conn): print(i)
+
+
+def is_container(remote_conn):
+    remote_conn.send("sqlplus / as sysdba\n")
+    time.sleep(1)
+    remote_conn.send("select name, cdb, con_id, con_dbid from v$database;\n")
+                     # "SELECT BANNER FROM V$VERSION WHERE BANNER LIKE 'Oracle%';\n"
+                     # "SELECT OPEN_MODE, LOG_MODE FROM V$DATABASE;\n")
+    time.sleep(2)
+    output = remote_conn.recv(10000)
+    sqlplus = output.decode("utf-8")
+    lines = sqlplus.splitlines(True)
+    rng = range(0, len(lines))
+    for i in rng:
+        # print(lines[i].strip().find('CDB'))
+        # print(lines[i].strip())
+        if lines[i].strip().find('CDB') == 7:
+            res = lines[i:i + 3]
+            for i in res:
+                yield i.strip()
+for i in is_container(remote_conn):
+    print(i)
+    if 'YES' in i:
+        print("CDB is here")
+
+# select name, cdb, con_id, con_dbid from v$database;
+# if exists: select con_id, name from v$pdbs;
+# select name, con_id from v$active_services where con_id != 1; - show pluggable databases
+# alter session set container = pdborcl;
+
 
 
 
