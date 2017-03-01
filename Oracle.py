@@ -157,10 +157,32 @@ def is_container(remote_conn):
             res = lines[i:i + 3]
             for i in res:
                 yield i.strip()
+
+
+def get_cont(remote_conn):
+    remote_conn.send("select con_id, name from v$pdbs;\n")
+    time.sleep(2)
+    output = remote_conn.recv(10000)
+    sqlplus = output.decode("utf-8")
+    lines = sqlplus.splitlines(True)
+    rng = range(0, len(lines))
+    for i in rng:
+        # print(lines[i].strip().find('CON_ID NAME'))
+        # print(lines[i].strip())
+        if lines[i].strip().find('CON_ID NAME') == 0:
+            res = lines[i+2:]
+            for i in res:
+                if len(i.strip()) != 0 and i.strip()[0].isdigit():
+                    yield i.strip()
+
+
+
 for i in is_container(remote_conn):
-    print(i)
+    # print(i)
     if 'YES' in i:
         print("CDB is here")
+        for i in get_cont(remote_conn): print(i)
+
 
 # select name, cdb, con_id, con_dbid from v$database;
 # if exists: select con_id, name from v$pdbs;
